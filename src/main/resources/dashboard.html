@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager - CRUD Operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-yellow: #FFD340;
+      --background-dark: #1A1A1A;
+      --card-dark: #2C2C2C;
+      --text-light: #F5F5F5;
+      --text-secondary: #AAAAAA;
+      --success-green: #4CAF50;
+      --danger-red: #f44336;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -20%;
+      right: -20%;
+      width: 60%;
+      height: 60%;
+      background: radial-gradient(circle, rgba(255, 211, 64, 0.08), transparent 70%);
+      filter: blur(100px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      z-index: 1;
+    }
+
+    .page-title {
+      text-align: center;
+      margin-bottom: 40px;
+      font-weight: 600;
+      font-size: 2.5rem;
+      color: var(--primary-yellow);
+    }
+
+    .crud-section {
+      background-color: rgba(44, 44, 44, 0.7);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--primary-yellow);
+      border-bottom: 2px solid var(--primary-yellow);
+      padding-bottom: 10px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 300;
+      color: var(--text-secondary);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 15px;
+      background-color: var(--card-dark);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary-yellow);
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-yellow);
+      color: var(--background-dark);
+    }
+
+    .btn-primary:hover {
+      background-color: #ffc90f;
+      transform: translateY(-2px);
+    }
+
+    .btn-success {
+      background-color: var(--success-green);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-red);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #da190b;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--text-secondary);
+      color: var(--background-dark);
+      transform: translateY(-2px);
+    }
+
+    .task-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .task-card {
+      background-color: rgba(44, 44, 44, 0.8);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .task-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(255, 211, 64, 0.1);
+    }
+
+    .task-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--primary-yellow);
+    }
+
+    .task-description {
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .task-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .task-priority {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .priority-high {
+      background-color: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+    }
+
+    .priority-medium {
+      background-color: rgba(255, 211, 64, 0.2);
+      color: var(--primary-yellow);
+    }
+
+    .priority-low {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+    }
+
+    .task-status {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-pending {
+      background-color: rgba(255, 193, 7, 0.2);
+      color: #FFC107;
+    }
+
+    .status-completed {
+      background-color: rgba(76, 175, 80, 0.2);
+      color: #4CAF50;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: var(--text-light);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background-color: rgba(44, 44, 44, 0.7);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--primary-yellow);
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .notification {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 211, 64, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary-yellow);
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .connection-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      border-radius: 25px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+
+    .status-connected {
+      background-color: rgba(76, 175, 80, 0.9);
+      color: white;
+    }
+
+    .status-disconnected {
+      background-color: rgba(244, 67, 54, 0.9);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .task-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .filter-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .crud-section > div:first-child {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="page-title">TASK MANAGER</h1>
+
+  <!-- Stats Section -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-number" id="totalTasks">0</div>
+      <div class="stat-label">Total Tasks</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="completedTasks">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="pendingTasks">0</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="highPriorityTasks">0</div>
+      <div class="stat-label">High Priority</div>
+    </div>
+  </div>
+
+  <!-- Create Task Section -->
+  <div class="crud-section">
+    <h2 class="section-title">Create New Task</h2>
+    <form id="taskForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="taskTitle" class="form-label">Task Title</label>
+          <input type="text" id="taskTitle" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label for="taskPriority" class="form-label">Priority</label>
+          <select id="taskPriority" class="form-select" required>
+            <option value="">Select Priority</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="taskDescription" class="form-label">Description</label>
+        <textarea id="taskDescription" class="form-textarea" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="taskDueDate" class="form-label">Due Date</label>
+        <input type="date" id="taskDueDate" class="form-input">
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="submitBtn">Create Task</button>
+      <button type="button" class="btn btn-secondary" id="cancelBtn" style="display: none;">Cancel Edit</button>
+    </form>
+  </div>
+
+  <!-- Tasks List Section -->
+  <div class="crud-section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 class="section-title" style="margin-bottom: 0;">Tasks</h2>
+      <div class="filter-buttons">
+        <button class="btn btn-secondary btn-small" onclick="taskManager.loadTasks()">All</button>
+        <button class="btn btn-secondary btn-small" onclick="taskManager.filterByStatus('pending')">Pending</button>
+        <button class="btn btn-secondary btn-small" onclick="taskManager.filterByStatus('completed')">Completed</button>
+        <button class="btn btn-secondary btn-small" onclick="taskManager.filterByPriority('high')">High Priority</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <input type="text" id="searchInput" class="form-input" placeholder="Search tasks..." style="max-width: 300px;">
+    </div>
+
+    <div class="task-grid" id="tasksContainer">
+      <div class="empty-state">
+        <h3>No tasks yet</h3>
+        <p>Create your first task to get started!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Task management system with API integration
+  class TaskManager {
+    constructor() {
+      this.tasks = [];
+      this.currentEditId = null;
+      this.apiBaseUrl = 'http://localhost:8080/api/tasks';
+      this.init();
+    }
+
+    init() {
+      this.bindEvents();
+      this.loadTasks();
+    }
+
+    bindEvents() {
+      document.getElementById('taskForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.handleSubmit();
+      });
+
+      document.getElementById('cancelBtn').addEventListener('click', () => {
+        this.cancelEdit();
+      });
+
+      // Add search functionality
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          this.searchTasks(e.target.value);
+        });
+      }
+
+      // Add connection status indicator
+      this.addConnectionStatus();
+    }
+
+    async handleSubmit() {
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Processing...';
+      submitBtn.disabled = true;
+
+      try {
+        const title = document.getElementById('taskTitle').value.trim();
+        const description = document.getElementById('taskDescription').value.trim();
+        const priority = document.getElementById('taskPriority').value.toUpperCase();
+        const dueDate = document.getElementById('taskDueDate').value;
+
+        if (!title || !priority) {
+          this.showNotification('Please fill in all required fields', 'error');
+          return;
+        }
+
+        const taskData = {
+          title,
+          description,
+          priority,
+          dueDate: dueDate || null
+        };
+
+        if (this.currentEditId) {
+          await this.updateTask(this.currentEditId, taskData);
+          this.showNotification('Task updated successfully!', 'success');
+        } else {
+          await this.createTask(taskData);
+          this.showNotification('Task created successfully!', 'success');
+        }
+
+        this.resetForm();
+        this.loadTasks();
+      } catch (error) {
+        console.error('Error:', error);
+        this.showNotification('An error occurred. Please try again.', 'error');
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+
+    async createTask(taskData) {
+      const response = await fetch(this.apiBaseUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create task');
+      }
+
+      return await response.json();
+    }
+
+    async updateTask(id, taskData) {
+      const response = await fetch(`${this.apiBaseUrl}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update task');
+      }
+
+      this.currentEditId = null;
+      document.getElementById('submitBtn').textContent = 'Create Task';
+      document.getElementById('cancelBtn').style.display = 'none';
+
+      return await response.json();
+    }
+
+    async deleteTask(id) {
+      if (!confirm('Are you sure you want to delete this task?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete task');
+        }
+
+        this.showNotification('Task deleted successfully!', 'success');
+        this.loadTasks();
+      } catch (error) {
+        console.error('Error:', error);
+        this.showNotification('Failed to delete task', 'error');
+      }
+    }
+
+    async editTask(id) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch task');
+        }
+
+        const task = await response.json();
+
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskDescription').value = task.description || '';
+        document.getElementById('taskPriority').value = task.priority.toLowerCase();
+        document.getElementById('taskDueDate').value = task.dueDate || '';
+
+        this.currentEditId = id;
+        document.getElementById('submitBtn').textContent = 'Update Task';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+
+        // Scroll to form
+        document.getElementById('taskForm').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        console.error('Error:', error);
+        this.showNotification('Failed to load task for editing', 'error');
+      }
+    }
+
+    async toggleStatus(id) {
+      try {
+        const task = this.tasks.find(t => t.id === id);
+        const newStatus = task.status === 'PENDING' ? 'COMPLETED' : 'PENDING';
+
+        const response = await fetch(`${this.apiBaseUrl}/${id}/status?status=${newStatus}`, {
+          method: 'PATCH'
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update task status');
+        }
+
+        this.showNotification(`Task marked as ${newStatus.toLowerCase()}!`, 'success');
+        this.loadTasks();
+      } catch (error) {
+        console.error('Error:', error);
+        this.showNotification('Failed to update task status', 'error');
+      }
+    }
+
+    cancelEdit() {
+      this.currentEditId = null;
+      this.resetForm();
+      document.getElementById('submitBtn').textContent = 'Create Task';
+      document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    resetForm() {
+      document.getElementById('taskForm').reset();
+    }
+
+    async loadTasks() {
+      try {
+        this.showLoading(true);
+        const response = await fetch(this.apiBaseUrl);
+
+        if (!response.ok) {
+          throw new Error('Failed to load tasks');
+        }
+
+        this.tasks = await response.json();
+        this.renderTasks();
+        this.updateStats();
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+        this.showNotification('Failed to load tasks. Please refresh the page.', 'error');
+        this.tasks = [];
+        this.renderTasks();
+      } finally {
+        this.showLoading(false);
+      }
+    }
+
+    async searchTasks(keyword) {
+      if (!keyword.trim()) {
+        this.loadTasks();
+        return;
+      }
+
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/search?keyword=${encodeURIComponent(keyword)}`);
+        if (response.ok) {
+          this.tasks = await response.json();
+          this.renderTasks();
+          this.updateStats();
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+      }
+    }
+
+    renderTasks() {
+      const container = document.getElementById('tasksContainer');
+
+      if (this.tasks.length === 0) {
+        container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No tasks found</h3>
+                            <p>Create your first task to get started!</p>
+                        </div>
+                    `;
+        return;
+      }
+
+      const tasksHTML = this.tasks.map(task => {
+        const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date';
+        const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status === 'PENDING';
+        const createdDate = new Date(task.createdAt).toLocaleDateString();
+
+        return `
+                        <div class="task-card">
+                            <div class="task-title">${this.escapeHtml(task.title)}</div>
+                            ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
+                            <div class="task-meta">
+                                <span class="task-priority priority-${task.priority.toLowerCase()}">${task.priority}</span>
+                                <span class="task-status status-${task.status.toLowerCase()}">${task.status}</span>
+                            </div>
+                            <div class="task-meta">
+                                <span style="color: ${isOverdue ? '#f44336' : 'var(--text-secondary)'}">
+                                    Due: ${dueDate}
+                                    ${isOverdue ? ' (Overdue)' : ''}
+                                </span>
+                            </div>
+                            <div class="task-meta">
+                                <span style="color: var(--text-secondary); font-size: 0.8rem;">
+                                    Created: ${createdDate}
+                                </span>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-success btn-small" onclick="taskManager.toggleStatus(${task.id})">
+                                    ${task.status === 'PENDING' ? 'Complete' : 'Reopen'}
+                                </button>
+                                <button class="btn btn-primary btn-small" onclick="taskManager.editTask(${task.id})">Edit</button>
+                                <button class="btn btn-danger btn-small" onclick="taskManager.deleteTask(${task.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+      }).join('');
+
+      container.innerHTML = tasksHTML;
+    }
+
+    async updateStats() {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/stats`);
+        if (response.ok) {
+          const stats = await response.json();
+          document.getElementById('totalTasks').textContent = stats.totalTasks;
+          document.getElementById('completedTasks').textContent = stats.completedTasks;
+          document.getElementById('pendingTasks').textContent = stats.pendingTasks;
+          document.getElementById('highPriorityTasks').textContent = stats.highPriorityTasks;
+        } else {
+          // Fallback to client-side calculation
+          const total = this.tasks.length;
+          const completed = this.tasks.filter(task => task.status === 'COMPLETED').length;
+          const pending = total - completed;
+          const highPriority = this.tasks.filter(task => task.priority === 'HIGH').length;
+
+          document.getElementById('totalTasks').textContent = total;
+          document.getElementById('completedTasks').textContent = completed;
+          document.getElementById('pendingTasks').textContent = pending;
+          document.getElementById('highPriorityTasks').textContent = highPriority;
+        }
+      } catch (error) {
+        console.error('Error updating stats:', error);
+      }
+    }
+
+    showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.textContent = message;
+
+      // Add styles for notification
+      notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    color: white;
+                    font-weight: 600;
+                    z-index: 1000;
+                    opacity: 0;
+                    transform: translateY(-20px);
+                    transition: all 0.3s ease;
+                    max-width: 400px;
+                `;
+
+      if (type === 'success') {
+        notification.style.backgroundColor = '#4CAF50';
+      } else if (type === 'error') {
+        notification.style.backgroundColor = '#f44336';
+      } else {
+        notification.style.backgroundColor = '#2196F3';
+      }
+
+      document.body.appendChild(notification);
+
+      // Animate in
+      setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateY(0)';
+      }, 10);
+
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    }
+
+    showLoading(show) {
+      const container = document.getElementById('tasksContainer');
+      if (show) {
+        container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Loading tasks...</h3>
+                            <p>Please wait while we fetch your tasks.</p>
+                        </div>
+                    `;
+      }
+    }
+
+    escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // Additional utility methods for filtering
+    async filterByStatus(status) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/status/${status.toUpperCase()}`);
+        if (response.ok) {
+          this.tasks = await response.json();
+          this.renderTasks();
+        }
+      } catch (error) {
+        console.error('Filter error:', error);
+      }
+    }
+
+    async filterByPriority(priority) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/priority/${priority.toUpperCase()}`);
+        if (response.ok) {
+          this.tasks = await response.json();
+          this.renderTasks();
+        }
+      } catch (error) {
+        console.error('Filter error:', error);
+      }
+    }
+  }
+
+  // Initialize the task manager when DOM is loaded
+  document.addEventListener('DOMContentLoaded', function() {
+    window.taskManager = new TaskManager();
+  });
+
+  // Handle API connection errors gracefully
+  window.addEventListener('unhandledrejection', function(event) {
+    console.error('Unhandled promise rejection:', event.reason);
+    if (event.reason.message && event.reason.message.includes('fetch')) {
+      // Show a user-friendly message for API connection issues
+      if (window.taskManager) {
+        window.taskManager.showNotification(
+                'Unable to connect to the server. Please make sure the API is running on localhost:8080',
+                'error'
+        );
+      }
+    }
+  });
+</script>
+</body>
+</html>
